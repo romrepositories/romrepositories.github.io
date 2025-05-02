@@ -1,1 +1,28 @@
-
+{
+    "version": 2,
+    "timestamp": "2023-08-05T12:00:00Z",
+    "data": [
+        {
+            "id": 1,
+            "name": "MIUI 14",
+            "brand": "Xiaomi",
+            "model": "Mi 11",
+            "androidVersion": "Android 13",
+            "size": "2.4GB",
+            "downloads": 2450,
+            "url": "#",
+            "version": "14.0.2"
+        },
+        {
+            "id": 2,
+            "name": "OneUI 5.0",
+            "brand": "Samsung",
+            "model": "Galaxy S22",
+            "androidVersion": "Android 13",
+            "size": "3.1GB",
+            "downloads": 1890,
+            "url": "#",
+            "version": "5.0.1"
+        }
+    ]
+}
