@@ -117,10 +117,6 @@
         <input type="text" id="searchInput" placeholder="搜索名称">
         <select id="brandFilter">
             <option value="tool">工具</option>
-            <option value="">所有品牌</option>
-            <option value="Xiaomi">小米</option>
-            <option value="Samsung">三星</option>
-            <option value="OnePlus">一加</option>
         </select>
     </div>
 
@@ -131,7 +127,7 @@
         const CONFIG = {
             DATA_URL: 'rom_data.json',
             CACHE_KEY: 'rom_repository_v1',
-            AUTO_REFRESH_INTERVAL: 3, // 5分钟
+            AUTO_REFRESH_INTERVAL: 300, // 5分钟
             MAX_RETRIES: 3
         };
 
