@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>615mc我的世界存档仓库</title>
+    <title>615MC存档仓库</title>
     <style>
         * {
             box-sizing: border-box;
@@ -110,12 +110,10 @@
     </style>
 </head>
 <body>
-    <h1>615mc我的世界世界服务器存档下载向导</h1>
-    <h4><a href"https://romrepositories.github.io/">root</a>/mc/</h4>
     <div class="status-bar" id="statusBar"></div>
     
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="搜索名称">
+        <input type="text" id="searchInput" placeholder="搜索">
     </div>
 
     <div id="romContainer" class="rom-list"></div>
@@ -123,14 +121,22 @@
     <script>
         // 配置参数
         const CONFIG = {
-            DATA_URL: 'mc.json',
-            CACHE_KEY: 'rom_repository_v1',
-            AUTO_REFRESH_INTERVAL: 3, 
+            DATA_URL: 'mc.json',  // 修改为mc.json
+            CACHE_KEY: 'rom_repository_mc_v1',
+            AUTO_REFRESH_INTERVAL: 300000,
             MAX_RETRIES: 3
         };
 
         let refreshTimer = null;
         let retryCount = 0;
+
+        // 确保DOM加载完成
+        document.addEventListener('DOMContentLoaded', () => {
+            init().catch(error => {
+                console.error('初始化失败:', error);
+                handleError(error);
+            });
+        });
 
         // 初始化
         async function init() {
@@ -147,56 +153,28 @@
 
         // 加载数据
         async function loadData() {
-            const cachedData = getCachedData();
-            
             try {
                 const response = await fetch(CONFIG.DATA_URL);
-                if (!response.ok) throw new Error(`HTTP错误 ${response.status}`);
-                
-                const freshData = await response.json();
-                validateData(freshData);
-                
-                if (shouldUpdateCache(cachedData, freshData)) {
-                    updateCache(freshData);
-                    window.romData = freshData.data;
-                    renderROMs(window.romData);
-                } else if (!window.romData) {
-                    window.romData = cachedData.data;
-                    renderROMs(window.romData);
+                if (!response.ok) {
+                    throw new Error(`HTTP错误 ${response.status}`);
                 }
-                retryCount = 0;
+                
+                const data = await response.json();
+                
+                // 验证数据结构
+                if (!data || !Array.isArray(data.data)) {
+                    throw new Error('无效的JSON格式');
+                }
+                
+                window.romData = data.data;
+                renderROMs(window.romData);
             } catch (error) {
-                if (cachedData) {
-                    window.romData = cachedData.data;
-                    renderROMs(window.romData);
-                    throw new Error(`${error.message}（使用缓存数据）`);
-                }
+                console.error('加载数据失败:', error);
                 throw error;
             }
         }
 
-        // 验证数据结构
-        function validateData(data) {
-            if (!data || !data.version || !data.timestamp || !Array.isArray(data.data)) {
-                throw new Error('无效的数据格式');
-            }
-        }
-
-        // 缓存管理
-        function getCachedData() {
-            const cached = localStorage.getItem(CONFIG.CACHE_KEY);
-            return cached ? JSON.parse(cached) : null;
-        }
-
-        function shouldUpdateCache(cached, fresh) {
-            return !cached || fresh.version > cached.version;
-        }
-
-        function updateCache(data) {
-            localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify(data));
-        }
-
-        // 渲染功能
+        // 渲染ROM列表
         function renderROMs(data) {
             const container = document.getElementById('romContainer');
             
@@ -253,8 +231,13 @@
 
         // 事件处理
         function setupEventListeners() {
-            document.getElementById('searchInput').addEventListener('input', filterROMs);
-            document.getElementById('brandFilter').addEventListener('change', filterROMs);
+            const searchInput = document.getElementById('searchInput');
+            const brandFilter = document.getElementById('brandFilter');
+            
+            if (searchInput && brandFilter) {
+                searchInput.addEventListener('input', filterROMs);
+                brandFilter.addEventListener('change', filterROMs);
+            }
             
             document.body.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('download-btn')) {
@@ -276,26 +259,35 @@
 
         // 状态显示
         function showLoading() {
-            document.getElementById('romContainer').innerHTML = '<div class="loader"></div>';
+            const container = document.getElementById('romContainer');
+            if (container) {
+                container.innerHTML = '<div class="loader"></div>';
+            }
             updateStatus('正在加载数据...');
         }
 
         function updateStatus(text) {
-            document.getElementById('statusBar').textContent = text;
+            const statusBar = document.getElementById('statusBar');
+            if (statusBar) {
+                statusBar.textContent = text;
+            }
         }
 
         // 错误处理
         function handleError(error) {
             console.error('发生错误:', error);
-            document.getElementById('romContainer').innerHTML = `
-                <div class="error-message">
-                    <h3>⚠️ 加载失败</h3>
-                    <p>${error.message}</p>
-                    ${retryCount < CONFIG.MAX_RETRIES ? 
-                        `<button onclick="retryLoad()">重试 (${CONFIG.MAX_RETRIES - retryCount}次剩余)</button>` :
-                        '<button onclick="location.reload()">重新加载页面</button>'}
-                </div>
-            `;
+            const container = document.getElementById('romContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="error-message">
+                        <h3>⚠️ 加载失败</h3>
+                        <p>${error.message}</p>
+                        ${retryCount < CONFIG.MAX_RETRIES ? 
+                            `<button onclick="retryLoad()">重试 (${CONFIG.MAX_RETRIES - retryCount}次剩余)</button>` :
+                            '<button onclick="location.reload()">重新加载页面</button>'}
+                    </div>
+                `;
+            }
             updateStatus(`错误: ${error.message}`);
         }
 
@@ -311,12 +303,8 @@
 
         // 模拟下载记录
         async function recordDownload(id) {
-            // 实际使用时需要对接API
             return new Promise(resolve => setTimeout(resolve, 500));
         }
-
-        // 启动
-        init();
     </script>
 </body>
 </html>
